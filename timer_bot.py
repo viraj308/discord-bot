@@ -3,6 +3,7 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 import os
 import asyncio
+import keyboard
 
 # Load environment variables from .env file
 load_dotenv()
@@ -13,15 +14,18 @@ bot_token = os.getenv("BOT_TOKEN")
 # Replace 'YOUR_BOT_TOKEN' with your actual bot token from the Discord Developer Portal
 TOKEN = bot_token
 
+USER_ID = 756620918952034314  # Replace with your Discord user ID
+
 # Enable necessary intents
 intents = discord.Intents.default()
 intents.message_content = True  # Allows the bot to read message content
+intents.voice_states = True  # Enable voice state intents to check user presence in voice channels
 
 # Prefix for bot commands
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # ID of the role that is allowed to set the timer (replace with your role ID)
-ALLOWED_ROLE_ID = 1306268971078520922  # Replace with actual role ID
+ALLOWED_ROLE_ID = 1306244777825534022  # Replace with actual role ID
 
 # Variable to store the timer task
 timer_task = None
@@ -30,6 +34,9 @@ timer_task = None
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user}')
+
+    # Start listening for the key sequence
+    asyncio.create_task(listen_for_key_sequence())
 
 # Command: Set Timer
 @bot.command(name="settimer")
@@ -75,6 +82,29 @@ async def timer_countdown(ctx, time_in_minutes):
 
     except asyncio.CancelledError:
         await ctx.send("Timer was canceled.")
+
+# Function to join the user's current voice channel and play a sound
+async def play_sound_in_user_channel():
+    for guild in bot.guilds:
+        # Get the member object for the user in this guild
+        member = guild.get_member(USER_ID)
+        if member and member.voice:  # Check if the user is connected to a voice channel
+            voice_channel = member.voice.channel
+            vc = await voice_channel.connect()
+            vc.play(discord.FFmpegPCMAudio("lere-lund-ke (mp3cut.net).mp3"))  # Replace with your sound file
+            await asyncio.sleep(5)  # Duration to play sound (adjust as needed)
+            await vc.disconnect()
+            return
+    print("User is not in any voice channel.")
+
+# Asynchronous function to listen for a key sequence
+async def listen_for_key_sequence():
+    # Run this loop to continuously listen for the key sequence
+    while True:
+        await asyncio.sleep(0.1)  # Avoid blocking the main bot thread
+        if keyboard.is_pressed("ctrl+shift+p"):  # Replace with your preferred key sequence
+            await play_sound_in_user_channel()
+
 
 # Run the bot
 bot.run(TOKEN)
