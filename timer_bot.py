@@ -3,6 +3,7 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 import os
 import asyncio
+import threading
 from pynput import keyboard
 
 # Load environment variables from .env file
@@ -35,8 +36,8 @@ timer_task = None
 async def on_ready():
     print(f'Logged in as {bot.user}')
 
-    # Start listening for the key sequence
-    asyncio.create_task(listen_for_key_sequence())
+    # Start the key listener in a separate thread
+    start_key_listener()
 
 # Command: Set Timer
 @bot.command(name="settimer")
@@ -97,19 +98,27 @@ async def play_sound_in_user_channel():
             return
     print("User is not in any voice channel.")
 
-# Function to listen for key sequences asynchronously
-async def listen_for_key_sequence():
-    def on_press(key):
-        try:
-            # Listen for a specific key or key combination
-            if key == keyboard.Key.f12:  # Replace with your desired key
-                asyncio.run_coroutine_threadsafe(play_sound_in_user_channel(), bot.loop)
-        except Exception as e:
-            print(e)
+# Global flag to control the key listener
+key_listener_active = True
 
-    # Start the listener in a separate thread
-    listener = keyboard.Listener(on_press=on_press)
-    listener.start()
+# Function to listen for key sequences globally (in a background thread)
+def on_press(key):
+    global key_listener_active
+    try:
+        if key == keyboard.Key.f12:  # Replace with your desired key
+            asyncio.run_coroutine_threadsafe(play_sound_in_user_channel(), bot.loop)
+    except Exception as e:
+        print(f"Error: {e}")
+
+def listen_for_key_sequence():
+    # Listen for keypresses globally without blocking the main thread
+    with keyboard.Listener(on_press=on_press) as listener:
+        listener.join()
+
+# Start the key listener in a separate thread
+def start_key_listener():
+    listener_thread = threading.Thread(target=listen_for_key_sequence, daemon=True)
+    listener_thread.start()
 
 
 # Run the bot
