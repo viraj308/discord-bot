@@ -3,7 +3,7 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 import os
 import asyncio
-import keyboard
+from pynput import keyboard
 
 # Load environment variables from .env file
 load_dotenv()
@@ -97,13 +97,19 @@ async def play_sound_in_user_channel():
             return
     print("User is not in any voice channel.")
 
-# Asynchronous function to listen for a key sequence
+# Function to listen for key sequences asynchronously
 async def listen_for_key_sequence():
-    # Run this loop to continuously listen for the key sequence
-    while True:
-        await asyncio.sleep(0.1)  # Avoid blocking the main bot thread
-        if keyboard.is_pressed("ctrl+shift+p"):  # Replace with your preferred key sequence
-            await play_sound_in_user_channel()
+    def on_press(key):
+        try:
+            # Listen for a specific key or key combination
+            if key == keyboard.Key.f12:  # Replace with your desired key
+                asyncio.run_coroutine_threadsafe(play_sound_in_user_channel(), bot.loop)
+        except Exception as e:
+            print(e)
+
+    # Start the listener in a separate thread
+    listener = keyboard.Listener(on_press=on_press)
+    listener.start()
 
 
 # Run the bot
