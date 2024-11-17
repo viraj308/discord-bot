@@ -5,6 +5,7 @@ import os
 import asyncio
 import threading
 from pynput import keyboard
+from mutagen.mp3 import MP3  # For reading MP3 duration
 
 # Load environment variables from .env file
 load_dotenv()
@@ -103,8 +104,13 @@ async def play_sound_in_user_channel(sound_file):
         if member and member.voice:  # Check if the user is connected to a voice channel
             voice_channel = member.voice.channel
             vc = await voice_channel.connect()
+
+            # Calculate sound duration
+            audio = MP3(sound_file)
+            duration = audio.info.length
+
             vc.play(discord.FFmpegPCMAudio(sound_file))  # Replace with your sound file
-            await asyncio.sleep(5)  # Duration to play sound (adjust as needed)
+            await asyncio.sleep(duration)  # Duration to play sound (adjust as needed)
             await vc.disconnect()
             return
     print("User is not in any voice channel.")
