@@ -25,6 +25,17 @@ intents.voice_states = True  # Enable voice state intents to check user presence
 # Prefix for bot commands
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+# Dictionary to map keys to sound files
+SOUND_MAP = {
+    keyboard.Key.f1: "sound/tapa-tap-tapa-tap-hindustani-bhau-meme-template-made-with-Voicemod.mp3",
+    keyboard.Key.f2: "sound/khali-wala-injection-manta-hai-tereko-hindustani-bhau-meme-temp-made-with-Voicemod.mp3",
+    keyboard.Key.f8: "sound/new-jett-ace-voiceline-made-with-Voicemod.mp3",
+    keyboard.Key.f9: "sound/do-you-shave-your-pussy.mp3",
+    keyboard.Key.f11: "sound/gamer-yoggy (mp3cut.net).mp3",
+    keyboard.Key.f10: "sound/nikal-laude-pehli-fursat-mein-made-with-Voicemod (mp3cut.net).mp3",
+    keyboard.Key.f12: "sound/lere-lund-ke (mp3cut.net).mp3",  # Default sound
+}
+
 # ID of the role that is allowed to set the timer (replace with your role ID)
 ALLOWED_ROLE_ID = 1306244777825534022  # Replace with actual role ID
 
@@ -71,7 +82,7 @@ async def timer_countdown(ctx, time_in_minutes):
             vc = await voice_channel.connect()
 
             # Ensure audio file path is correct
-            audio_source = discord.FFmpegPCMAudio("darius-stimming-made-with-Voicemod.mp3")  # Ensure this file exists in the same folder
+            audio_source = discord.FFmpegPCMAudio("sound/darius-stimming-made-with-Voicemod.mp3")  # Ensure this file exists in the same folder
             if not audio_source.is_opus():
                 vc.play(audio_source)
                 await asyncio.sleep(10)  # Play for 10 seconds
@@ -85,14 +96,14 @@ async def timer_countdown(ctx, time_in_minutes):
         await ctx.send("Timer was canceled.")
 
 # Function to join the user's current voice channel and play a sound
-async def play_sound_in_user_channel():
+async def play_sound_in_user_channel(sound_file):
     for guild in bot.guilds:
         # Get the member object for the user in this guild
         member = guild.get_member(USER_ID)
         if member and member.voice:  # Check if the user is connected to a voice channel
             voice_channel = member.voice.channel
             vc = await voice_channel.connect()
-            vc.play(discord.FFmpegPCMAudio("lere-lund-ke (mp3cut.net).mp3"))  # Replace with your sound file
+            vc.play(discord.FFmpegPCMAudio(sound_file))  # Replace with your sound file
             await asyncio.sleep(5)  # Duration to play sound (adjust as needed)
             await vc.disconnect()
             return
@@ -105,8 +116,9 @@ key_listener_active = True
 def on_press(key):
     global key_listener_active
     try:
-        if key == keyboard.Key.f12:  # Replace with your desired key
-            asyncio.run_coroutine_threadsafe(play_sound_in_user_channel(), bot.loop)
+        if key in SOUND_MAP:  # Check if the pressed key is mapped to a sound
+            sound_file = SOUND_MAP[key]
+            asyncio.run_coroutine_threadsafe(play_sound_in_user_channel(sound_file), bot.loop)
     except Exception as e:
         print(f"Error: {e}")
 
